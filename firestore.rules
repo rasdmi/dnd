@@ -1,0 +1,44 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn(){ return request.auth != null; }
+    function uid(){ return request.auth.uid; }
+    function isOwner(userId){ return signedIn() && uid() == userId; }
+    function isHost(lobbyId){
+      return signedIn()
+        && get(/databases/$(database)/documents/lobbies/$(lobbyId)).data.hostUid == uid();
+    }
+    function isPlayer(lobbyId){
+      return signedIn()
+        && exists(/databases/$(database)/documents/lobbies/$(lobbyId)/players/$(uid()));
+    }
+
+    match /lobbies/{lobbyId} {
+      allow read: if signedIn();
+      allow create: if signedIn();
+      allow update: if signedIn(); // MVP simplify
+      allow delete: if isHost(lobbyId);
+
+      match /players/{playerId} {
+        allow read: if signedIn();
+        allow create, update, delete: if signedIn() && (playerId == uid() || isHost(lobbyId));
+      }
+
+      match /messages/{msgId} {
+        allow read: if signedIn() && isPlayer(lobbyId);
+        allow create: if signedIn() && isPlayer(lobbyId);
+        allow update, delete: if false;
+      }
+    }
+
+    match /users/{userId} {
+      allow read, create, update: if isOwner(userId);
+      allow delete: if false;
+
+      match /savedGames/{gameId} {
+        allow read, create, update, delete: if isOwner(userId);
+      }
+    }
+  }
+}

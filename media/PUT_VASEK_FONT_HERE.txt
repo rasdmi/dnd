@@ -1,0 +1,1 @@
+Put your Vasek Italic_0.ttf into this folder and keep the exact filename: 'Vasek Italic_0.ttf'

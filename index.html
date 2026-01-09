@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Игра — текстовая DnD</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <div class="bgGrid"></div>
+
+  <header class="topbar">
+    <div class="brand">Игра (DnD текст)</div>
+    <div class="spacer"></div>
+
+    <div class="pill">
+      <span>Аккаунт:</span>
+      <b id="userEmail">гость</b>
+    </div>
+
+    <button class="btn ghost" id="homeBtn">лобби</button>
+    <button class="btn ghost" id="savedBtn">saved</button>
+    <button class="btn" id="loginBtn">войти Google</button>
+    <button class="btn" id="logoutBtn" style="display:none;">выйти</button>
+  </header>
+
+  <main class="wrap">
+    <section class="view is-active" data-view="home">
+      <div class="hero">
+        <div class="hTitle">Текстовая DnD сессия</div>
+        <div class="hSub">
+          Создай лобби или зайди в чужое. Собери персонажа из шаблонов (раса/класс/бэкграунд), общайся и нажимай “Готово”.
+          На MVP ход GM запускает хост кнопкой “GM Turn”.
+        </div>
+        <div class="row" style="margin-top:14px;">
+          <button class="btn" id="createLobbyBtn">+ создать лобби</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="muted mini">Подсказка</div>
+        <div class="muted">Чтобы сделать настоящего AI GM — подключи Worker endpoint в <b>config.js</b>.</div>
+        <div class="lobbyGrid" id="lobbyList"></div>
+      </div>
+    </section>
+
+    <section class="view" data-view="room">
+      <div class="hero">
+        <div class="hTitle" id="roomTitle">Лобби</div>
+        <div class="hSub" id="roomMeta"></div>
+        <div class="row" style="margin-top:12px;">
+          <button class="btn ghost" id="leaveBtn">выйти</button>
+          <button class="btn ghost" id="startBtn">старт (хост)</button>
+          <button class="btn" id="gmTurnBtn">GM Turn (хост)</button>
+          <button class="btn ghost" id="readyBtn">готово</button>
+          <button class="btn ghost" id="saveBtn">сохранить</button>
+        </div>
+      </div>
+
+      <div class="roomGrid">
+        <div class="panel">
+          <div class="panelH">Игроки</div>
+          <div id="players" class="players"></div>
+        </div>
+
+        <div class="panel">
+          <div class="panelH">Чат</div>
+          <div id="chat" class="chat"></div>
+          <div class="composer">
+            <textarea class="field" id="msgInput" placeholder="Напишите действие… (Ctrl/Cmd+Enter отправить)"></textarea>
+            <button class="btn" id="sendBtn">отправить</button>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panelH">Персонаж</div>
+          <div class="muted mini">Шаблоны + своё</div>
+
+          <div style="margin-top:10px;">
+            <div class="muted mini">Имя</div>
+            <input class="field" id="charName" placeholder="например: Арагорн">
+          </div>
+
+          <div style="margin-top:10px;">
+            <div class="muted mini">Раса</div>
+            <input class="field" id="race" placeholder="выбери ниже или напиши">
+            <div class="chips" id="rChips"></div>
+          </div>
+
+          <div style="margin-top:10px;">
+            <div class="muted mini">Класс</div>
+            <input class="field" id="klass" placeholder="выбери ниже или напиши">
+            <div class="chips" id="cChips"></div>
+          </div>
+
+          <div style="margin-top:10px;">
+            <div class="muted mini">Бэкграунд</div>
+            <input class="field" id="bg" placeholder="выбери ниже или напиши">
+            <div class="chips" id="bChips"></div>
+          </div>
+
+          <div style="margin-top:10px;">
+            <div class="muted mini">Заметки</div>
+            <textarea class="field" id="charNotes" placeholder="мотивы, слабости, инвентарь, привычки"></textarea>
+          </div>
+
+          <div class="row" style="margin-top:10px; justify-content:flex-end;">
+            <button class="btn" id="saveCharBtn">сохранить персонажа</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="view" data-view="saved">
+      <div class="hero">
+        <div class="hTitle">Saved</div>
+        <div class="hSub">Сохранённые стенограммы (у тебя в аккаунте).</div>
+      </div>
+      <div id="savedList"></div>
+    </section>
+  </main>
+
+  <div class="modal" id="createLobbyModal">
+    <div class="modalCard">
+      <div class="modalH">Создать лобби</div>
+      <div class="row" style="margin-top:10px;">
+        <div style="flex:1;">
+          <div class="muted mini">Название</div>
+          <input class="field" id="cName" placeholder="например: Поход в Гондор">
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:10px;">
+        <div style="flex:1;">
+          <div class="muted mini">Пароль (необязательно)</div>
+          <input class="field" id="cPass" placeholder="если нужно">
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:10px;">
+        <div style="flex:1;">
+          <div class="muted mini">Макс игроков</div>
+          <input class="field" id="cMax" type="number" min="2" max="10" value="4">
+        </div>
+        <div style="flex:1;">
+          <div class="muted mini">Длина игры (сообщений GM)</div>
+          <input class="field" id="cTurns" type="number" min="4" max="50" value="12">
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:14px; justify-content:flex-end;">
+        <button class="btn ghost" id="cCancel">отмена</button>
+        <button class="btn" id="cCreate">создать</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="joinLobbyModal">
+    <div class="modalCard">
+      <div class="modalH" id="joinTitle">Войти</div>
+
+      <div class="row" style="margin-top:10px;">
+        <div style="flex:1;">
+          <div class="muted mini">Имя игрока</div>
+          <input class="field" id="jName" placeholder="например: Серёжа">
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:10px;">
+        <div style="flex:1;">
+          <div class="muted mini">Пароль</div>
+          <input class="field" id="jPass" placeholder="если есть">
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:14px; justify-content:flex-end;">
+        <button class="btn ghost" id="jCancel">отмена</button>
+        <button class="btn" id="jJoin">войти</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
